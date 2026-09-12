@@ -56,6 +56,41 @@ ul { list-style: none; }
 .section-padding { padding: 144px 64px; }
 @media (max-width: 768px) { .section-padding { padding: 96px 24px; } }
 
+/* ─── Routed page intro ───────────────────────────────────────────── */
+.page-intro {
+  min-height: 62svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 180px 64px 72px;
+}
+.page-intro p {
+  margin-bottom: 20px;
+  color: var(--accent);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.page-intro h1 {
+  max-width: 900px;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: clamp(48px, 8vw, 116px);
+  font-weight: 500;
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+}
+@media (max-width: 768px) {
+  .page-intro {
+    min-height: 58svh;
+    padding: 140px 24px 56px;
+  }
+}
+
 /* ─── Moving blue aurora gradient orbs (global fixed layer) ─────────── */
 .aurora-bg {
   position: fixed;

@@ -1,4 +1,5 @@
-import { motion }          from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
+import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { MotionProvider }    from './context/MotionContext'
 import { useLenis }          from './hooks/useLenis'
 import { CustomCursor }      from './components/CustomCursor'
@@ -12,8 +13,60 @@ import { WhereImHeaded }     from './sections/WhereImHeaded'
 import { Marquee }           from './sections/Marquee'
 import { Contact }           from './sections/Contact'
 
+function HomePage() {
+  return (
+    <>
+      <Hero />
+      <Marquee />
+    </>
+  )
+}
+
+function WorkPage() {
+  return (
+    <>
+      <PageIntro eyebrow="01 / Selected work" title="Projects with a point of view." />
+      <Projects />
+    </>
+  )
+}
+
+function AboutPage() {
+  return (
+    <>
+      <PageIntro eyebrow="02 / About" title="Thoughtful systems, carefully made." />
+      <WhatIKnow />
+      <HowIWork />
+      <WhereImHeaded />
+    </>
+  )
+}
+
+function NowPage() {
+  return (
+    <>
+      <PageIntro eyebrow="03 / Now" title="A snapshot of what is moving." />
+      <NowPanel />
+    </>
+  )
+}
+
+function ContactPage() {
+  return <Contact />
+}
+
+function PageIntro({ eyebrow, title }: { eyebrow: string, title: string }) {
+  return (
+    <section className="page-intro">
+      <p>{eyebrow}</p>
+      <h1>{title}</h1>
+    </section>
+  )
+}
+
 function AppContent() {
   useLenis()
+  const location = useLocation()
 
   return (
     <>
@@ -36,20 +89,24 @@ function AppContent() {
           minHeight: '100vh',
           width: '100%',
         }}>
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <Hero />
-            <WhatIKnow />
-            <NowPanel />
-            <Projects />
-            <HowIWork />
-            <WhereImHeaded />
-            <Marquee />
-            <Contact />
-          </motion.div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 28 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <Routes location={location}>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/work" element={<WorkPage />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/now" element={<NowPage />} />
+                <Route path="/contact" element={<ContactPage />} />
+                <Route path="*" element={<HomePage />} />
+              </Routes>
+            </motion.div>
+          </AnimatePresence>
         </div>
       </main>
     </>
@@ -59,7 +116,9 @@ function AppContent() {
 export default function App() {
   return (
     <MotionProvider>
-      <AppContent />
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
     </MotionProvider>
   )
 }

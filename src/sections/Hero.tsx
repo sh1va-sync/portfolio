@@ -206,10 +206,10 @@ export function Hero() {
             transition={{ delay: 0.9, duration: 0.6 }}
             style={{ display: 'flex', gap: '16px' }}
           >
-            <MagneticButton href="#projects" variant="primary">
+            <MagneticButton href="/work" variant="primary">
               View selected work
             </MagneticButton>
-            <MagneticButton href="#contact" variant="outline">
+            <MagneticButton href="/contact" variant="outline">
               Get in touch
             </MagneticButton>
           </motion.div>
