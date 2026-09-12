@@ -1,0 +1,153 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Design Tokens ────────────────────────────────────────────────── */
+:root {
+  --bg-base:       #FFFFFF;
+  --bg-surface:    #F8FAFF;
+  --bg-band:       #EEF2FF;
+  --text-primary:  #080818;
+  --text-muted:    #6B7280;
+  --accent:        #2563EB;
+  --accent-mid:    #3B82F6;
+  --accent-light:  #BFDBFE;
+  --font-display:  'Fraunces', serif;
+  --font-ui:       'Inter', sans-serif;
+  --radius-btn:    4px;
+  --radius-panel:  20px;
+}
+
+/* ─── Reset ────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: auto; }
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.6;
+  cursor: none;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (pointer: coarse) { body { cursor: auto; } }
+
+input, textarea, select, [contenteditable] { cursor: text; }
+a { color: inherit; text-decoration: none; }
+ul { list-style: none; }
+
+/* ─── Focus states ─────────────────────────────────────────────────── */
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ─── Selection ────────────────────────────────────────────────────── */
+::selection {
+  background: rgba(37, 99, 235, 0.15);
+  color: var(--text-primary);
+}
+
+/* ─── Section rhythm ───────────────────────────────────────────────── */
+.section-padding { padding: 144px 64px; }
+@media (max-width: 768px) { .section-padding { padding: 96px 24px; } }
+
+/* ─── Moving blue aurora gradient orbs (global fixed layer) ─────────── */
+.aurora-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.aurora-orb {
+  position: absolute;
+  border-radius: 50%;
+  will-change: transform;
+}
+
+.aurora-orb-1 {
+  top: -20%;
+  left: -10%;
+  width: 90vw;
+  height: 90vw;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.45) 0%, transparent 65%);
+  animation: aurora-1 22s ease-in-out infinite;
+}
+.aurora-orb-2 {
+  top: 20%;
+  right: -20%;
+  width: 75vw;
+  height: 75vw;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.40) 0%, transparent 65%);
+  animation: aurora-2 28s ease-in-out infinite;
+}
+.aurora-orb-3 {
+  bottom: -10%;
+  left: 15%;
+  width: 65vw;
+  height: 65vw;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.50) 0%, transparent 65%);
+  animation: aurora-3 18s ease-in-out infinite;
+}
+.aurora-orb-4 {
+  top: 50%;
+  left: 40%;
+  width: 50vw;
+  height: 50vw;
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.35) 0%, transparent 65%);
+  animation: aurora-1 35s ease-in-out infinite reverse;
+}
+
+@keyframes aurora-1 {
+  0%,100% { transform: translate(0%, 0%)   scale(1); }
+  30%      { transform: translate(12%, -8%) scale(1.12); }
+  60%      { transform: translate(-6%, 10%) scale(0.92); }
+}
+@keyframes aurora-2 {
+  0%,100% { transform: translate(0%, 0%)    scale(1); }
+  25%      { transform: translate(-10%, 7%) scale(1.1); }
+  75%      { transform: translate(7%, -10%) scale(0.96); }
+}
+@keyframes aurora-3 {
+  0%,100% { transform: translate(0%, 0%)   scale(1); }
+  50%      { transform: translate(8%, -12%) scale(1.08); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-orb { animation: none !important; }
+}
+
+/* ─── Marquee ticker ───────────────────────────────────────────────── */
+@keyframes marquee-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll 30s linear infinite;
+  will-change: transform;
+}
+.marquee-track:hover { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; }
+}
+
+/* ─── Gradient text utility ────────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Project image hover scale ────────────────────────────────────── */
+.project-img-wrap { overflow: hidden; }
+.project-img-wrap img { transition: transform 0.7s cubic-bezier(0.16,1,0.3,1); }
+.project-img-wrap:hover img { transform: scale(1.06); }
