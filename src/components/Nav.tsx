@@ -4,10 +4,11 @@ import { useMotionContext } from '../context/MotionContext'
 import { useNavigate } from 'react-router-dom'
 
 const NAV_LINKS = [
-  { label: 'Work', href: '/work', number: '01' },
-  { label: 'About', href: '/about', number: '02' },
-  { label: 'Now', href: '/now', number: '03' },
-  { label: 'Contact', href: '/contact', number: '04' },
+  { label: 'Home', href: '/', number: '01' },
+  { label: 'Work', href: '/work', number: '02' },
+  { label: 'About', href: '/about', number: '03' },
+  { label: 'Now', href: '/now', number: '04' },
+  { label: 'Contact', href: '/contact', number: '05' },
 ]
 
 const EASE = [0.16, 1, 0.3, 1] as const
@@ -71,18 +72,23 @@ export function Nav() {
       >
         <a
           href="/"
+          className="nav-logo"
           aria-label="Back to top"
           data-cursor="hover"
           onClick={(event) => {
             event.preventDefault()
-            navigateTo('#hero')
+            navigateTo('/')
           }}
           style={{
             pointerEvents: 'auto',
             display: 'grid',
             placeItems: 'center',
+            flex: '0 0 48px',
             width: '48px',
             height: '48px',
+            minWidth: '48px',
+            minHeight: '48px',
+            aspectRatio: '1 / 1',
             borderRadius: '50%',
             background: 'rgba(255,255,255,0.72)',
             border: '1px solid rgba(255,255,255,0.92)',
@@ -92,6 +98,7 @@ export function Nav() {
             fontFamily: 'var(--font-display)',
             fontWeight: 600,
             fontSize: '16px',
+            lineHeight: 1,
             letterSpacing: '-0.04em',
           }}
         >
@@ -113,9 +120,9 @@ export function Nav() {
             padding: '0 18px',
             border: '1px solid rgba(255,255,255,0.92)',
             borderRadius: '999px',
-            background: isOpen ? 'var(--text-primary)' : 'rgba(255,255,255,0.72)',
-            color: isOpen ? '#fff' : 'var(--text-primary)',
-            boxShadow: '0 12px 30px rgba(8,8,24,0.08)',
+            background: isOpen ? 'var(--text-primary)' : 'var(--accent)',
+            color: '#fff',
+            boxShadow: isOpen ? '0 12px 30px rgba(8,8,24,0.18)' : '0 12px 30px rgba(37,99,235,0.28)',
             backdropFilter: 'blur(18px)',
             WebkitBackdropFilter: 'blur(18px)',
             fontFamily: 'var(--font-ui)',
@@ -147,6 +154,7 @@ export function Nav() {
             role="dialog"
             aria-modal="true"
             aria-label="Site menu"
+            className="menu-overlay"
             initial={{ clipPath: 'inset(0 0 100% 0)' }}
             animate={{ clipPath: 'inset(0 0 0% 0)' }}
             exit={{ clipPath: 'inset(100% 0 0% 0)' }}
@@ -166,7 +174,7 @@ export function Nav() {
             }}
           >
             <div style={{ position: 'absolute', top: '18%', right: '8%', width: '30vw', height: '30vw', borderRadius: '50%', background: 'rgba(147,197,253,0.18)', filter: 'blur(30px)', pointerEvents: 'none' }} />
-            <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', gap: '32px' }}>
+            <div className="menu-header" style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', gap: '32px' }}>
               <div>
                 <p style={{ marginBottom: '20px', fontFamily: 'var(--font-ui)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)' }}>
                   Navigation
@@ -180,7 +188,7 @@ export function Nav() {
               </span>
             </div>
 
-            <nav style={{ position: 'relative', display: 'flex', minHeight: 0, flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-start', gap: 'clamp(2px, 0.7vh, 8px)', overflowY: 'auto', padding: '4px 0' }}>
+            <nav className="menu-links" style={{ position: 'relative', display: 'flex', minHeight: 0, flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-start', gap: 'clamp(2px, 0.7vh, 8px)', overflowY: 'auto', padding: '4px 0' }}>
               {NAV_LINKS.map((link, index) => (
                 <motion.button
                   key={link.label}
@@ -216,7 +224,7 @@ export function Nav() {
               ))}
             </nav>
 
-            <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', gap: '24px', borderTop: '1px solid rgba(255,255,255,0.22)', paddingTop: '14px', fontFamily: 'var(--font-ui)', fontSize: '12px', lineHeight: 1.3, color: 'rgba(255,255,255,0.65)' }}>
+            <div className="menu-footer" style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', gap: '24px', borderTop: '1px solid rgba(255,255,255,0.22)', paddingTop: '14px', fontFamily: 'var(--font-ui)', fontSize: '12px', lineHeight: 1.3, color: 'rgba(255,255,255,0.65)' }}>
               <span>Available for thoughtful work</span>
               <span>Scroll / Select</span>
             </div>

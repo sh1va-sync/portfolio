@@ -1,127 +1,116 @@
-import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { LineReveal } from '../components/LineReveal'
 import { MagneticButton } from '../components/MagneticButton'
 import { useMotionContext } from '../context/MotionContext'
 
-const LINE_1 = 'Building intelligence'
-const LINE_2 = 'into interfaces.'
-const SUBHEAD = 'I design and engineer digital experiences that bridge the gap between human intent and machine capability.'
+const LINE_1 = 'Hi, I’m Shiva.'
+const LINE_2 = 'I build useful intelligence.'
+const SUBHEAD = 'I’m a software engineer learning to build end-to-end AI systems that integrate into businesses and make meaningful work move faster.'
 
-function ChatInterface() {
-  const [messages, setMessages] = useState([
-    { id: 1, sender: 'ai', text: "Hi, I'm Shiva's AI assistant. I can answer questions about his work, experience, or availability." }
-  ])
-  const [input, setInput] = useState('')
+function JigglyText({ text, gradient = false, ripple = false }: { text: string, gradient?: boolean, ripple?: boolean }) {
+  const characterRefs = useRef<Array<HTMLSpanElement | null>>([])
+  const [pointer, setPointer] = useState({ x: -1000, y: -1000 })
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!input.trim()) return
-    
-    // Add user message
-    const newUserMsg = { id: Date.now(), sender: 'user', text: input }
-    setMessages(prev => [...prev, newUserMsg])
-    setInput('')
-    
-    // Simulate AI typing response
-    setTimeout(() => {
-      setMessages(prev => [
-        ...prev, 
-        { id: Date.now() + 1, sender: 'ai', text: "I'm just a visual demo right now, but imagine if I were fully hooked up to an LLM!" }
-      ])
-    }, 1000)
+  const handlePointerMove = (event: React.PointerEvent<HTMLSpanElement>) => {
+    setPointer({ x: event.clientX, y: event.clientY })
   }
 
   return (
-    <div
-      style={{
-        width: '100%',
-        maxWidth: '440px',
-        backgroundColor: 'rgba(255, 255, 255, 0.7)',
-        backdropFilter: 'blur(24px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-        border: '1px solid rgba(255,255,255,0.9)',
-        borderRadius: '24px',
-        boxShadow: '0 32px 64px -16px rgba(8,8,24,0.08), 0 4px 12px -4px rgba(8,8,24,0.04)',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        height: '480px',
-      }}
+    <span
+      onPointerMove={handlePointerMove}
+      onPointerLeave={() => setPointer({ x: -1000, y: -1000 })}
+      className={gradient ? 'gradient-text' : undefined}
+      style={{ display: 'inline' }}
     >
-      {/* Header */}
-      <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(8,8,24,0.06)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--accent)' }} />
-        <span style={{ fontFamily: 'var(--font-ui)', fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
-          AI Assistant
-        </span>
+      {Array.from(text).map((character, index) => {
+        const bounds = characterRefs.current[index]?.getBoundingClientRect()
+        const characterX = bounds ? bounds.left + bounds.width / 2 : -1000
+        const characterY = bounds ? bounds.top + bounds.height / 2 : -1000
+        const distance = Math.hypot(pointer.x - characterX, pointer.y - characterY)
+        const influence = Math.max(0, 1 - distance / 120)
+
+        return (
+          <motion.span
+            key={`${character}-${index}`}
+            ref={(element) => {
+              characterRefs.current[index] = element
+            }}
+            style={{ display: 'inline-block' }}
+            animate={{
+              rotate: ripple
+                ? influence * Math.sin(index * 0.9) * 8
+                : influence * (index % 2 === 0 ? -5 : 5),
+              skewX: ripple ? influence * Math.cos(index * 0.7) * 3 : 0,
+              scaleX: ripple ? 1 + influence * 0.04 : 1,
+              color: influence > 0.05 ? 'var(--accent)' : undefined,
+            }}
+            transition={{ type: 'spring', stiffness: ripple ? 300 : 360, damping: 24, mass: 0.4 }}
+          >
+            {character === ' ' ? '\u00a0' : character}
+          </motion.span>
+        )
+      })}
+    </span>
+  )
+}
+
+function AgentChatPreview() {
+  const [input, setInput] = useState('')
+  const [messages, setMessages] = useState([
+    { id: 1, sender: 'agent', text: 'Hi, I’m Shiva’s AI agent. Ask me about his work, skills, or what he is building next.' },
+  ])
+  const suggestions = ['What does Shiva build?', 'Tell me about his AI work']
+
+  const sendMessage = (text = input) => {
+    const trimmed = text.trim()
+    if (!trimmed) return
+    setMessages((current) => [
+      ...current,
+      { id: Date.now(), sender: 'visitor', text: trimmed },
+      { id: Date.now() + 1, sender: 'agent', text: 'I’m being connected soon. For now, explore the work and see what Shiva is learning.' },
+    ])
+    setInput('')
+  }
+
+  return (
+    <div className="agent-chat-preview">
+      <div className="agent-chat-header">
+        <div className="agent-chat-identity">
+          <span className="ai-live-dot" />
+          <div><strong>Shiva’s agent</strong><span>Here to help</span></div>
+        </div>
+        <span className="agent-chat-status">Preview</span>
       </div>
 
-      {/* Message Area */}
-      <div style={{ flex: 1, padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div className="agent-chat-messages" aria-live="polite">
         <AnimatePresence initial={false}>
-          {messages.map(msg => (
+          {messages.map((message) => (
             <motion.div
-              key={msg.id}
-              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              key={message.id}
+              className={`agent-chat-message ${message.sender}`}
+              initial={{ opacity: 0, y: 8, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              style={{
-                alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
-                maxWidth: '85%',
-                padding: '12px 16px',
-                borderRadius: '16px',
-                borderBottomLeftRadius: msg.sender === 'ai' ? '4px' : '16px',
-                borderBottomRightRadius: msg.sender === 'user' ? '4px' : '16px',
-                backgroundColor: msg.sender === 'user' ? 'var(--accent)' : 'rgba(8,8,24,0.04)',
-                color: msg.sender === 'user' ? '#fff' : 'var(--text-primary)',
-                fontFamily: 'var(--font-ui)',
-                fontSize: '14.5px',
-                lineHeight: 1.5,
-              }}
             >
-              {msg.text}
+              {message.text}
             </motion.div>
           ))}
         </AnimatePresence>
       </div>
 
-      {/* Input Area */}
-      <form onSubmit={handleSubmit} style={{ padding: '16px 24px', borderTop: '1px solid rgba(8,8,24,0.06)', display: 'flex', gap: '12px' }}>
-        <input
-          type="text"
-          placeholder="Ask me anything..."
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          style={{
-            flex: 1,
-            backgroundColor: 'transparent',
-            border: 'none',
-            outline: 'none',
-            fontFamily: 'var(--font-ui)',
-            fontSize: '15px',
-            color: 'var(--text-primary)',
-          }}
-        />
-        <button
-          type="submit"
-          style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '50%',
-            backgroundColor: 'var(--text-primary)',
-            color: '#fff',
-            border: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            opacity: input.trim() ? 1 : 0.4,
-            transition: 'opacity 0.2s',
-          }}
-        >
-          ↑
-        </button>
+      <div className="agent-chat-suggestions">
+        {suggestions.map((suggestion) => (
+          <button key={suggestion} type="button" onClick={() => sendMessage(suggestion)} data-cursor="hover">
+            {suggestion}
+          </button>
+        ))}
+      </div>
+
+      <form className="agent-chat-form" onSubmit={(event) => { event.preventDefault(); sendMessage() }}>
+        <input value={input} onChange={(event) => setInput(event.target.value)} placeholder="Ask about Shiva..." aria-label="Ask Shiva’s AI agent" />
+        <button type="submit" aria-label="Send message" disabled={!input.trim()} data-cursor="hover">↗</button>
       </form>
+      <div className="agent-chat-footer"><span>AI agent interface / coming soon</span><span>↗</span></div>
     </div>
   )
 }
@@ -130,54 +119,22 @@ export function Hero() {
   const { prefersReducedMotion } = useMotionContext()
 
   return (
-    <section
-      id="hero"
-      aria-label="Hero"
-      style={{
-        position: 'relative',
-        minHeight: '100svh',
-        display: 'flex',
-        alignItems: 'center',
-        padding: '120px 40px',
-      }}
-    >
-      <div 
-        style={{ 
-          maxWidth: '1300px', 
-          width: '100%', 
-          margin: '0 auto',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
-          gap: '80px',
-          alignItems: 'center',
-        }}
-      >
-        
-        {/* Left Side: Copy */}
-        <div style={{ position: 'relative', zIndex: 1, textAlign: 'left' }}>
-          
-          <h1
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontVariationSettings: '"opsz" 144',
-              fontWeight: 560,
-              fontSize: 'clamp(3.5rem, 7vw, 6.5rem)',
-              lineHeight: 0.95,
-              letterSpacing: '-0.03em',
-              color: 'var(--text-primary)',
-              marginBottom: '2rem',
-            }}
-          >
+    <section id="hero" aria-label="Hero" className="hero-section">
+      <div className="hero-grid">
+        <div className="hero-copy">
+          <h1>
             {prefersReducedMotion ? (
               <>
-                <div>{LINE_1}</div>
-                <div className="gradient-text">{LINE_2}</div>
+                <span>{LINE_1}</span>
+                <span className="gradient-text">{LINE_2}</span>
               </>
             ) : (
               <>
-                <LineReveal delay={0.2}>{LINE_1}</LineReveal>
+                <LineReveal delay={0.2}>
+                  <JigglyText text={LINE_1} />
+                </LineReveal>
                 <LineReveal delay={0.35}>
-                  <span className="gradient-text">{LINE_2}</span>
+                  <JigglyText text={LINE_2} gradient ripple />
                 </LineReveal>
               </>
             )}
@@ -187,15 +144,7 @@ export function Hero() {
             initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7, duration: 0.6 }}
-            style={{
-              fontFamily: 'var(--font-ui)',
-              fontSize: 'clamp(17px, 2vw, 22px)',
-              fontWeight: 400,
-              lineHeight: 1.5,
-              color: 'var(--text-muted)',
-              maxWidth: '46ch',
-              marginBottom: '48px',
-            }}
+            className="hero-subhead"
           >
             {SUBHEAD}
           </motion.p>
@@ -204,27 +153,25 @@ export function Hero() {
             initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.9, duration: 0.6 }}
-            style={{ display: 'flex', gap: '16px' }}
+            className="hero-actions"
           >
             <MagneticButton href="/work" variant="primary">
-              View selected work
+              See what I make <span aria-hidden="true">↗</span>
             </MagneticButton>
             <MagneticButton href="/contact" variant="outline">
-              Get in touch
+              Start a conversation <span aria-hidden="true">✦</span>
             </MagneticButton>
           </motion.div>
         </div>
 
-        {/* Right Side: Chat UI */}
         <motion.div
           initial={prefersReducedMotion ? {} : { opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          style={{ display: 'flex', justifyContent: 'center' }}
+          className="hero-visual"
         >
-          <ChatInterface />
+          <AgentChatPreview />
         </motion.div>
-
       </div>
     </section>
   )

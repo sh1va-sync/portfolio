@@ -7,17 +7,19 @@ import { Nav }               from './components/Nav'
 import { Hero }              from './sections/Hero'
 import { WhatIKnow }         from './sections/WhatIKnow'
 import { NowPanel }          from './sections/NowPanel'
-import { Projects }          from './sections/Projects'
+import { ProjectDetail, Projects } from './sections/Projects'
 import { HowIWork }          from './sections/HowIWork'
 import { WhereImHeaded }     from './sections/WhereImHeaded'
 import { Marquee }           from './sections/Marquee'
 import { Contact }           from './sections/Contact'
+import { CurrentlyWorking }  from './sections/CurrentlyWorking'
 
 function HomePage() {
   return (
     <>
       <Hero />
       <Marquee />
+      <CurrentlyWorking />
     </>
   )
 }
@@ -100,6 +102,7 @@ function AppContent() {
               <Routes location={location}>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/work" element={<WorkPage />} />
+                <Route path="/work/:projectId" element={<ProjectRoute />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/now" element={<NowPage />} />
                 <Route path="/contact" element={<ContactPage />} />
@@ -111,6 +114,12 @@ function AppContent() {
       </main>
     </>
   )
+}
+
+function ProjectRoute() {
+  const location = useLocation()
+  const projectId = location.pathname.split('/').pop() ?? ''
+  return <ProjectDetail projectId={projectId} />
 }
 
 export default function App() {
