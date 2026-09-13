@@ -16,8 +16,18 @@ const EASE = [0.16, 1, 0.3, 1] as const
 export function Nav() {
   const [isOpen, setIsOpen] = useState(false)
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window === 'undefined') return false
+    const stored = window.localStorage.getItem('portfolio-theme')
+    return stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches
+  })
   const { prefersReducedMotion } = useMotionContext()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = isDark ? 'dark' : 'light'
+    window.localStorage.setItem('portfolio-theme', isDark ? 'dark' : 'light')
+  }, [isDark])
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : ''
@@ -73,11 +83,12 @@ export function Nav() {
         <a
           href="/"
           className="nav-logo"
-          aria-label="Back to top"
+          aria-label="Toggle dark mode"
+          title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
           data-cursor="hover"
           onClick={(event) => {
             event.preventDefault()
-            navigateTo('/')
+            setIsDark((dark) => !dark)
           }}
           style={{
             pointerEvents: 'auto',
@@ -90,9 +101,9 @@ export function Nav() {
             minHeight: '48px',
             aspectRatio: '1 / 1',
             borderRadius: '50%',
-            background: 'rgba(255,255,255,0.72)',
-            border: '1px solid rgba(255,255,255,0.92)',
-            boxShadow: '0 12px 30px rgba(8,8,24,0.08)',
+            background: 'var(--nav-logo-bg)',
+            border: '1px solid var(--nav-logo-border)',
+            boxShadow: 'var(--nav-logo-shadow)',
             backdropFilter: 'blur(18px)',
             WebkitBackdropFilter: 'blur(18px)',
             fontFamily: 'var(--font-display)',

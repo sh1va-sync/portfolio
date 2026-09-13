@@ -84,13 +84,7 @@ function AppContent() {
 
       <Nav />
       <main style={{ position: 'relative', zIndex: 1, minHeight: '100vh' }}>
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.35)',
-          backdropFilter: 'blur(40px) saturate(150%)',
-          WebkitBackdropFilter: 'blur(40px) saturate(150%)',
-          minHeight: '100vh',
-          width: '100%',
-        }}>
+        <div className="app-glass">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
