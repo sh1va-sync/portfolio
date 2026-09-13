@@ -16,7 +16,6 @@ export function Contact() {
   const pointerY = useMotionValue(0)
   const springX = useSpring(pointerX, { stiffness: 180, damping: 24 })
   const springY = useSpring(pointerY, { stiffness: 180, damping: 24 })
-  const year = new Date().getFullYear()
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -103,11 +102,6 @@ export function Contact() {
               ))}
             </div>
           </nav>
-        </div>
-
-        <div className="contact-footer">
-          <span>Shiva Chary</span>
-          <span>{year}</span>
         </div>
       </div>
     </footer>

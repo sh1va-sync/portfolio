@@ -4,6 +4,7 @@ import { MotionProvider }    from './context/MotionContext'
 import { useLenis }          from './hooks/useLenis'
 import { CustomCursor }      from './components/CustomCursor'
 import { Nav }               from './components/Nav'
+import { SiteFooter }        from './components/SiteFooter'
 import { Hero }              from './sections/Hero'
 import { WhatIKnow }         from './sections/WhatIKnow'
 import { NowPanel }          from './sections/NowPanel'
@@ -83,7 +84,7 @@ function AppContent() {
       </div>
 
       <Nav />
-      <main style={{ position: 'relative', zIndex: 1, minHeight: '100vh' }}>
+      <main id="top" style={{ position: 'relative', zIndex: 1, minHeight: '100vh' }}>
         <div className="app-glass">
           <AnimatePresence mode="wait">
             <motion.div
@@ -106,6 +107,7 @@ function AppContent() {
           </AnimatePresence>
         </div>
       </main>
+      <SiteFooter />
     </>
   )
 }

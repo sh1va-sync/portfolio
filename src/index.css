@@ -82,6 +82,9 @@ body {
   background: linear-gradient(145deg, rgba(20,29,50,0.88), rgba(23,33,58,0.72));
   box-shadow: 0 32px 64px -16px rgba(0,0,0,0.3);
 }
+[data-theme='dark'] .agent-hero-visual .agent-chat-preview {
+  background: radial-gradient(circle at var(--agent-pointer-x, 50%) var(--agent-pointer-y, 50%), rgba(70,103,190,0.3), transparent 34%), linear-gradient(145deg, rgba(20,29,50,0.88), rgba(23,33,58,0.72));
+}
 [data-theme='dark'] .agent-chat-message.agent {
   background: rgba(255,255,255,0.08);
 }
@@ -248,6 +251,26 @@ ul { list-style: none; }
 .agent-chat-form button:disabled { opacity: 0.35; cursor: not-allowed; }
 .agent-chat-footer { justify-content: space-between; padding-top: 16px; color: var(--text-muted); font: 700 10px var(--font-ui); letter-spacing: 0.1em; text-transform: uppercase; }
 
+.agent-hero { min-height: min(900px, 100svh); padding: 118px 40px 78px; overflow: hidden; }
+.agent-hero-visual { position: relative; width: min(1120px, 100%); margin: 0 auto; perspective: 1200px; }
+.agent-hero-glow { position: absolute; top: 50%; left: 50%; width: min(80vw, 900px); aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle at var(--agent-pointer-x, 50%) var(--agent-pointer-y, 50%), rgba(37,99,235,0.22), transparent 56%); filter: blur(22px); pointer-events: none; transition: background 0.5s ease; }
+.agent-hero-visual .agent-chat-preview { position: relative; z-index: 1; max-width: 920px; min-height: 650px; margin: 0 auto; padding: clamp(28px, 4vw, 54px); border-radius: 34px; transform-style: preserve-3d; background: radial-gradient(circle at var(--agent-pointer-x, 50%) var(--agent-pointer-y, 50%), rgba(255,255,255,0.9), transparent 34%), linear-gradient(145deg, rgba(255,255,255,0.84), rgba(232,239,255,0.5)); box-shadow: 0 42px 100px -28px rgba(37,99,235,0.24), 0 30px 70px -28px rgba(8,8,24,0.2); transition: background 0.45s ease, box-shadow 0.45s ease; }
+.agent-hero-visual .agent-chat-messages { min-height: 290px; padding: 30px 0; }
+.agent-hero-visual .agent-chat-message { max-width: 78%; padding: 16px 18px; font-size: 15px; }
+.agent-message-label { display: block; margin-bottom: 8px; color: var(--accent); font: 700 9px var(--font-ui); letter-spacing: 0.14em; }
+.agent-chat-message.visitor .agent-message-label { color: rgba(255,255,255,0.72); }
+.agent-chat-caret { display: inline-block; width: 2px; height: 1em; margin-left: 3px; vertical-align: -2px; background: var(--accent); animation: agent-caret 0.9s steps(1) infinite; }
+.agent-chat-orbit { position: absolute; border: 1px solid rgba(37,99,235,0.13); border-radius: 50%; pointer-events: none; }
+.agent-chat-orbit-one { width: 120%; height: 70%; top: 16%; left: -10%; transform: rotate(-16deg); animation: agent-orbit 16s linear infinite; }
+.agent-chat-orbit-two { width: 86%; height: 120%; top: -10%; left: 8%; transform: rotate(28deg); border-color: rgba(124,58,237,0.12); animation: agent-orbit 22s linear infinite reverse; }
+.agent-chat-prompt-mark { align-self: center; color: var(--accent); font-size: 20px; }
+.agent-chat-suggestions button { display: inline-flex; align-items: center; gap: 8px; transition: transform 0.25s ease, background 0.25s ease; }
+.agent-chat-suggestions button span { color: var(--text-muted); font-size: 9px; }
+.agent-chat-suggestions button:hover { transform: translateY(-3px); }
+.agent-chat-footer-line { width: 44px; height: 1px; background: var(--accent); opacity: 0.5; }
+@keyframes agent-caret { 50% { opacity: 0; } }
+@keyframes agent-orbit { from { transform: rotate(-16deg); } to { transform: rotate(344deg); } }
+
 /* ─── Currently working ──────────────────────────────────────────── */
 .currently-working { border-top: 1px solid rgba(8,8,24,0.08); }
 .currently-working-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: minmax(160px, 0.35fr) 1fr; gap: 64px; }
@@ -290,6 +313,9 @@ ul { list-style: none; }
 @media (max-width: 768px) {
   .hero-section { min-height: auto; padding: 140px 24px 96px; }
   .hero-grid { grid-template-columns: 1fr; gap: 56px; }
+  .agent-hero { min-height: auto; padding: 132px 24px 80px; }
+  .agent-hero-visual .agent-chat-preview { min-height: 560px; }
+  .agent-hero-visual .agent-chat-messages { min-height: 230px; }
   .agent-chat-preview { min-height: 410px; }
   .agent-chat-messages { min-height: 180px; }
   .currently-working-inner { grid-template-columns: 1fr; gap: 32px; }
@@ -302,6 +328,12 @@ ul { list-style: none; }
   .project-detail-hero span { display: block; margin-top: 24px; }
   .project-detail-image { height: 70vw; border-radius: 12px; }
   .project-detail-copy { grid-template-columns: 1fr; gap: 40px; padding: 64px 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-chat-caret,
+  .agent-chat-orbit-one,
+  .agent-chat-orbit-two { animation: none; }
 }
 
 /* ─── Routed page intro ───────────────────────────────────────────── */
@@ -595,6 +627,38 @@ ul { list-style: none; }
 .contact-page {
   min-height: 100vh;
   border-top: 1px solid rgba(8,8,24,0.04);
+}
+
+/* ─── Shared site footer ──────────────────────────────────────────── */
+.site-footer {
+  position: relative;
+  z-index: 0;
+  min-height: 150px;
+  overflow: hidden;
+  padding: 30px 64px 20px;
+  border-top: 1px solid rgba(37,99,235,0.18);
+  background: rgba(255,255,255,0.28);
+  color: var(--text-primary);
+  backdrop-filter: blur(28px) saturate(140%);
+  -webkit-backdrop-filter: blur(28px) saturate(140%);
+}
+.site-footer-inner { position: relative; z-index: 1; width: min(1120px, 100%); min-height: 100px; margin: 0 auto; display: flex; flex-direction: column; justify-content: space-between; }
+.site-footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.site-footer-bottom { padding-top: 10px; color: var(--text-muted); font: 11px var(--font-ui); }
+.site-footer-bottom nav { display: flex; gap: 22px; }
+.site-footer a { transition: color 0.2s ease; }
+.site-footer-bottom a:hover { color: var(--accent); }
+[data-theme='dark'] .site-footer { border-color: rgba(147,197,253,0.2); background: linear-gradient(145deg, rgba(20,29,50,0.84), rgba(23,33,58,0.62)); }
+@media (max-width: 768px) {
+  .site-footer { min-height: 150px; padding: 24px 24px 20px; }
+  .site-footer-inner { min-height: 104px; }
+  .site-footer-bottom { display: grid; gap: 18px; }
+  .site-footer-bottom nav { order: -1; flex-wrap: wrap; gap: 14px 20px; }
 }
 .contact-container {
   width: min(1100px, 100%);

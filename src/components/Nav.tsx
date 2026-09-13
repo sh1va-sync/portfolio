@@ -4,11 +4,11 @@ import { useMotionContext } from '../context/MotionContext'
 import { useNavigate } from 'react-router-dom'
 
 const NAV_LINKS = [
-  { label: 'Home', href: '/', number: '01' },
-  { label: 'Work', href: '/work', number: '02' },
-  { label: 'About', href: '/about', number: '03' },
-  { label: 'Now', href: '/now', number: '04' },
-  { label: 'Contact', href: '/contact', number: '05' },
+  { label: 'Home', href: '/', number: '00' },
+  { label: 'Work', href: '/work', number: '01' },
+  { label: 'About', href: '/about', number: '02' },
+  { label: 'Now', href: '/now', number: '03' },
+  { label: 'Contact', href: '/contact', number: '04' },
 ]
 
 const EASE = [0.16, 1, 0.3, 1] as const
