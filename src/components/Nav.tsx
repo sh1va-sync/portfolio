@@ -7,8 +7,7 @@ const NAV_LINKS = [
   { label: 'Home', href: '/', number: '00' },
   { label: 'Work', href: '/work', number: '01' },
   { label: 'About', href: '/about', number: '02' },
-  { label: 'Now', href: '/now', number: '03' },
-  { label: 'Contact', href: '/contact', number: '04' },
+  { label: 'Contact', href: '/contact', number: '03' },
 ]
 
 const EASE = [0.16, 1, 0.3, 1] as const

@@ -7,7 +7,6 @@ import { Nav }               from './components/Nav'
 import { SiteFooter }        from './components/SiteFooter'
 import { Hero }              from './sections/Hero'
 import { WhatIKnow }         from './sections/WhatIKnow'
-import { NowPanel }          from './sections/NowPanel'
 import { ProjectDetail, Projects } from './sections/Projects'
 import { HowIWork }          from './sections/HowIWork'
 import { WhereImHeaded }     from './sections/WhereImHeaded'
@@ -41,15 +40,6 @@ function AboutPage() {
       <WhatIKnow />
       <HowIWork />
       <WhereImHeaded />
-    </>
-  )
-}
-
-function NowPage() {
-  return (
-    <>
-      <PageIntro eyebrow="03 / Now" title="A snapshot of what is moving." />
-      <NowPanel />
     </>
   )
 }
@@ -99,7 +89,6 @@ function AppContent() {
                 <Route path="/work" element={<WorkPage />} />
                 <Route path="/work/:projectId" element={<ProjectRoute />} />
                 <Route path="/about" element={<AboutPage />} />
-                <Route path="/now" element={<NowPage />} />
                 <Route path="/contact" element={<ContactPage />} />
                 <Route path="*" element={<HomePage />} />
               </Routes>
