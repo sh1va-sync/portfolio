@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 const FOOTER_LINKS = [
   { label: 'Work', href: '/work' },
   { label: 'About', href: '/about' },
-  { label: 'Now', href: '/now' },
   { label: 'Contact', href: '/contact' },
 ] as const
 
