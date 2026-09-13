@@ -477,6 +477,8 @@ ul { list-style: none; }
   will-change: transform;
 }
 .marquee-track:hover { animation-play-state: paused; }
+[data-theme='dark'] .marquee-section { border-top-color: rgba(147,197,253,0.14) !important; }
+[data-theme='dark'] .marquee-word { -webkit-text-stroke-color: rgba(255,255,255,0.5) !important; }
 @media (prefers-reduced-motion: reduce) {
   .marquee-track { animation: none; }
 }

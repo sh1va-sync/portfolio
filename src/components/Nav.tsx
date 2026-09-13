@@ -19,7 +19,7 @@ export function Nav() {
   const [isDark, setIsDark] = useState(() => {
     if (typeof window === 'undefined') return false
     const stored = window.localStorage.getItem('portfolio-theme')
-    return stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches
+    return stored ? stored === 'dark' : true
   })
   const { prefersReducedMotion } = useMotionContext()
   const navigate = useNavigate()
