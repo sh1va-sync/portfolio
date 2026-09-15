@@ -153,24 +153,10 @@ function AgentChatPreview() {
 }
 
 export function Hero() {
-  const nameLetters = 'shiva chary'.split('')
-
   return (
     <section id="hero" aria-label="Shiva’s AI assistant" className="hero-section agent-hero">
       <div className="hero-visual agent-hero-visual">
         <div className="agent-hero-glow" aria-hidden="true" />
-        <div className="agent-hero-name" aria-hidden="true">
-          {nameLetters.map((letter, index) => (
-            <motion.span
-              key={`${letter}-${index}`}
-              initial={{ opacity: 0, y: 24, rotate: index % 2 ? 4 : -4 }}
-              animate={{ opacity: 1, y: 0, rotate: 0 }}
-              transition={{ delay: 0.7 + index * 0.08, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            >
-              {letter === ' ' ? '\u00a0' : letter}
-            </motion.span>
-          ))}
-        </div>
         <AgentChatPreview />
       </div>
     </section>
