@@ -130,9 +130,13 @@ export function Projects() {
 
 export function ProjectDetail({ projectId }: { projectId: string }) {
   const project = PROJECTS.find((item) => item.id === projectId) ?? PROJECTS[0]
+  const navigate = useNavigate()
 
   return (
     <section className="project-detail section-padding">
+      <button className="project-detail-back" type="button" onClick={() => navigate('/work')}>
+        <span aria-hidden="true">←</span> Back to work
+      </button>
       <div className="project-detail-hero">
         <p>Selected work / {project.year}</p>
         <h1>{project.title}</h1>

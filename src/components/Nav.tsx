@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { Moon, Palette, Sun } from 'lucide-react'
 import { useMotionContext } from '../context/MotionContext'
 import { useNavigate } from 'react-router-dom'
 
@@ -15,6 +16,9 @@ const EASE = [0.16, 1, 0.3, 1] as const
 export function Nav() {
   const [isOpen, setIsOpen] = useState(false)
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const [isLogoExpanded, setIsLogoExpanded] = useState(false)
+  const [isArtistic, setIsArtistic] = useState(false)
+  const [isModeTransitioning, setIsModeTransitioning] = useState(false)
   const [isDark, setIsDark] = useState(() => {
     if (typeof window === 'undefined') return false
     const stored = window.localStorage.getItem('portfolio-theme')
@@ -27,6 +31,19 @@ export function Nav() {
     document.documentElement.dataset.theme = isDark ? 'dark' : 'light'
     window.localStorage.setItem('portfolio-theme', isDark ? 'dark' : 'light')
   }, [isDark])
+
+  useEffect(() => {
+    document.documentElement.dataset.mode = isArtistic ? 'artistic' : 'technical'
+    window.localStorage.setItem('portfolio-mode', isArtistic ? 'artistic' : 'technical')
+  }, [isArtistic])
+
+  useEffect(() => {
+    const storedMode = window.localStorage.getItem('portfolio-mode')
+    if (storedMode === 'artistic') setIsArtistic(true)
+    setIsLogoExpanded(true)
+    const timeout = window.setTimeout(() => setIsLogoExpanded(false), 1000)
+    return () => window.clearTimeout(timeout)
+  }, [])
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : ''
@@ -59,6 +76,12 @@ export function Nav() {
     }, 480)
   }
 
+  const toggleArtisticMode = () => {
+    setIsModeTransitioning(true)
+    setIsArtistic((artistic) => !artistic)
+    window.setTimeout(() => setIsModeTransitioning(false), prefersReducedMotion ? 0 : 850)
+  }
+
   return (
     <>
       <motion.nav
@@ -79,41 +102,45 @@ export function Nav() {
           pointerEvents: 'none',
         }}
       >
-        <a
-          href="/"
-          className="nav-logo"
-          aria-label="Toggle dark mode"
-          title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-          data-cursor="hover"
-          onClick={(event) => {
-            event.preventDefault()
-            setIsDark((dark) => !dark)
-          }}
-          style={{
-            pointerEvents: 'auto',
-            display: 'grid',
-            placeItems: 'center',
-            flex: '0 0 48px',
-            width: '48px',
-            height: '48px',
-            minWidth: '48px',
-            minHeight: '48px',
-            aspectRatio: '1 / 1',
-            borderRadius: '50%',
-            background: 'var(--nav-logo-bg)',
-            border: '1px solid var(--nav-logo-border)',
-            boxShadow: 'var(--nav-logo-shadow)',
-            backdropFilter: 'blur(18px)',
-            WebkitBackdropFilter: 'blur(18px)',
-            fontFamily: 'var(--font-display)',
-            fontWeight: 600,
-            fontSize: '16px',
-            lineHeight: 1,
-            letterSpacing: '-0.04em',
-          }}
-        >
-          SC
-        </a>
+        <div className={`nav-logo-shell${isLogoExpanded ? ' is-expanded' : ''}`}>
+          <motion.div className="nav-logo" layout transition={{ duration: prefersReducedMotion ? 0 : 0.65, ease: EASE }}>
+          <button
+            type="button"
+            className="nav-logo-trigger"
+            aria-label={isLogoExpanded ? 'Collapse logo controls' : 'Open logo controls'}
+            aria-expanded={isLogoExpanded}
+            onClick={() => setIsLogoExpanded((expanded) => !expanded)}
+            data-cursor="hover"
+          >
+            <img className="nav-signature" src="/signature.svg" alt="Shiva signature" />
+          </button>
+          </motion.div>
+
+          <AnimatePresence>
+            {isLogoExpanded && (
+              <motion.div className="nav-logo-controls" initial={{ opacity: 0, scaleX: 0.2, x: -14 }} animate={{ opacity: 1, scaleX: 1, x: 0 }} exit={{ opacity: 0, scaleX: 0.2, x: -14 }} transition={{ duration: prefersReducedMotion ? 0 : 0.45, ease: EASE }}>
+                <button type="button" onClick={() => setIsDark((dark) => !dark)} title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}>
+                  {isDark ? <Sun size={15} /> : <Moon size={15} />}
+                  <span>{isDark ? 'Light' : 'Dark'}</span>
+                </button>
+                <button type="button" className={isArtistic ? 'is-active' : ''} onClick={toggleArtisticMode} title="Switch artistic mode">
+                  <Palette size={15} />
+                  <span>{isArtistic ? 'Studio' : 'Art'}</span>
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+      <AnimatePresence>
+        {isModeTransitioning && !prefersReducedMotion && (
+          <div className="mode-transition" aria-hidden="true">
+            <motion.i className="mode-ripple mode-ripple-white" initial={{ scale: 0, opacity: 0.9 }} animate={{ scale: 3.6, opacity: 0 }} transition={{ duration: 0.95, ease: EASE }} />
+            <motion.i className="mode-ripple mode-ripple-violet" initial={{ scale: 0, opacity: 0.85 }} animate={{ scale: 3.1, opacity: 0 }} transition={{ duration: 0.95, delay: 0.08, ease: EASE }} />
+            <motion.i className="mode-ripple mode-ripple-blue" initial={{ scale: 0, opacity: 0.9 }} animate={{ scale: 2.6, opacity: 0 }} transition={{ duration: 0.95, delay: 0.16, ease: EASE }} />
+          </div>
+        )}
+      </AnimatePresence>
 
         <button
           type="button"
