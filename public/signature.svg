@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 64" fill="none">
+  <defs>
+    <filter id="neon" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="1.8" result="glow"/>
+      <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <text x="80" y="45" text-anchor="middle"
+    fill="#FFFFFF"
+    stroke="#60A5FA"
+    stroke-width="1.4"
+    paint-order="stroke"
+    filter="url(#neon)"
+    font-family="'Brush Script MT', 'Segoe Script', 'Snell Roundhand', cursive"
+    font-size="43"
+    font-style="italic"
+    font-weight="600"
+    letter-spacing="-2">shiva</text>
+</svg>

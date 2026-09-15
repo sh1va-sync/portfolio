@@ -13,6 +13,7 @@ import { WhereImHeaded }     from './sections/WhereImHeaded'
 import { Marquee }           from './sections/Marquee'
 import { Contact }           from './sections/Contact'
 import { CurrentlyWorking }  from './sections/CurrentlyWorking'
+import { ContactCTA }        from './sections/ContactCTA'
 
 function HomePage() {
   return (
@@ -20,6 +21,7 @@ function HomePage() {
       <Hero />
       <Marquee />
       <CurrentlyWorking />
+      <ContactCTA />
     </>
   )
 }
