@@ -1,12 +1,22 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import ReactMarkdown from 'react-markdown'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useMotionContext } from '../context/MotionContext'
 
+type MessageRole = 'user' | 'assistant'
+
 type ChatMessage = {
-  id: number
-  sender: 'agent' | 'visitor'
-  text: string
+  id: string
+  role: MessageRole
+  content: string
+  sources?: string[]
+  isStreaming?: boolean
 }
+
+type HealthState = 'checking' | 'online' | 'offline' | 'degraded'
+
+const API_URL = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000').replace(/\/$/, '')
+const SESSION_STORAGE_KEY = 'portfolio-agent-chat'
 
 const SUGGESTIONS = [
   'What does Shiva build?',
@@ -14,11 +24,7 @@ const SUGGESTIONS = [
   'How does he think?',
 ]
 
-const RESPONSES = [
-  'I build useful interfaces and the AI systems behind them — from thoughtful product surfaces to agentic workflows.',
-  'Right now I am learning the full AI stack: GenAI, retrieval, orchestration, and agents that can move work forward.',
-  'I start with the real constraint, make the idea tangible, then iterate until the useful thing becomes obvious.',
-]
+const WELCOME_MESSAGE = 'Hi — I’m Shiva’s AI assistant. Ask me about the work, the thinking, or what I’m building next.'
 
 function Typewriter({ text, reducedMotion }: { text: string; reducedMotion: boolean }) {
   const [visibleText, setVisibleText] = useState(reducedMotion ? text : '')
@@ -43,23 +49,183 @@ function Typewriter({ text, reducedMotion }: { text: string; reducedMotion: bool
   return <>{visibleText}<span className="agent-chat-caret" aria-hidden="true" /></>
 }
 
+function readStoredChat(): { conversationId: string | null; messages: ChatMessage[] } {
+  try {
+    const stored = window.sessionStorage.getItem(SESSION_STORAGE_KEY)
+    if (!stored) return { conversationId: null, messages: [] }
+    const parsed = JSON.parse(stored) as { conversationId?: unknown; messages?: unknown }
+    if (!Array.isArray(parsed.messages)) return { conversationId: null, messages: [] }
+
+    const messages = parsed.messages.filter((message): message is ChatMessage => {
+      if (!message || typeof message !== 'object') return false
+      const candidate = message as Partial<ChatMessage>
+      return typeof candidate.id === 'string'
+        && (candidate.role === 'user' || candidate.role === 'assistant')
+        && typeof candidate.content === 'string'
+        && !candidate.isStreaming
+    })
+
+    return {
+      conversationId: typeof parsed.conversationId === 'string' ? parsed.conversationId : null,
+      messages,
+    }
+  } catch {
+    return { conversationId: null, messages: [] }
+  }
+}
+
+function MarkdownMessage({ content }: { content: string }) {
+  return (
+    <div className="agent-markdown">
+      <ReactMarkdown
+        components={{
+          a: ({ href, children }) => (
+            <a href={href} target="_blank" rel="noreferrer">{children}</a>
+          ),
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  )
+}
+
+async function getErrorMessage(response: Response, fallback: string) {
+  try {
+    const data = await response.json() as { detail?: string; message?: string }
+    return data.message || data.detail || fallback
+  } catch {
+    return fallback
+  }
+}
+
+function createMessage(role: MessageRole, content: string, isStreaming = false): ChatMessage {
+  return {
+    id: `${role}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    role,
+    content,
+    isStreaming,
+  }
+}
+
 function AgentChatPreview() {
   const { prefersReducedMotion } = useMotionContext()
+  const storedChat = useRef(readStoredChat()).current
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
   const [input, setInput] = useState('')
-  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [messages, setMessages] = useState<ChatMessage[]>(storedChat.messages)
+  const [conversationId, setConversationId] = useState<string | null>(storedChat.conversationId)
+  const [health, setHealth] = useState<HealthState>('checking')
+  const [isSending, setIsSending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [lastFailedMessage, setLastFailedMessage] = useState<string | null>(null)
   const [pointer, setPointer] = useState({ x: 0, y: 0 })
 
-  const sendMessage = (text = input) => {
+  useEffect(() => {
+    window.sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({
+      conversationId,
+      messages: messages.filter((message) => !message.isStreaming),
+    }))
+  }, [conversationId, messages])
+
+  useEffect(() => {
+    const container = messagesContainerRef.current
+    if (container) {
+      container.scrollTop = container.scrollHeight
+    }
+  }, [messages, error])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    fetch(`${API_URL}/api/health`, { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Health request failed')
+        const data = await response.json() as { status?: string; knowledge_ready?: boolean }
+        setHealth(data.status === 'ok' && data.knowledge_ready !== false ? 'online' : 'degraded')
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setHealth('offline')
+      })
+
+    return () => controller.abort()
+  }, [])
+
+  const sendMessage = async (text = input) => {
     const trimmed = text.trim()
-    if (!trimmed) return
-    const response = RESPONSES[messages.length % RESPONSES.length]
-    setMessages((current) => [
-      ...current,
-      { id: Date.now(), sender: 'visitor', text: trimmed },
-      { id: Date.now() + 1, sender: 'agent', text: response },
-    ])
+    if (!trimmed || isSending || health !== 'online') return
+
+    const history = messages.map(({ role, content }) => ({ role, content }))
+    const userMessage = createMessage('user', trimmed)
+    const assistantMessage = createMessage('assistant', '', true)
+
+    setMessages((current) => [...current, userMessage, assistantMessage])
     setInput('')
+    setError(null)
+    setLastFailedMessage(null)
+    setIsSending(true)
+
+    try {
+      const response = await fetch(`${API_URL}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          conversation_id: conversationId,
+          message: trimmed,
+          history,
+        }),
+      })
+
+      if (!response.ok) {
+        const fallback = response.status === 429
+          ? 'Whoa, slow down a second. Give me a beat, then ask again.'
+          : response.status === 502
+            ? 'Sync hit a temporary glitch. Try sending that again.'
+            : response.status === 422
+              ? 'Please check your message and try again.'
+              : `Chat request failed (${response.status}).`
+        throw new Error(await getErrorMessage(response, fallback))
+      }
+
+      const data = await response.json() as {
+        conversation_id?: string | null
+        message?: string
+        sources?: string[]
+      }
+
+      const reply = data.message || 'I did not receive a response. Try that again.'
+      setConversationId(data.conversation_id ?? conversationId)
+      setMessages((current) => current.map((message) =>
+        message.id === assistantMessage.id
+          ? { ...message, content: reply, sources: data.sources ?? [], isStreaming: false }
+          : message
+      ))
+    } catch (requestError) {
+      const message = requestError instanceof Error ? requestError.message : 'Sync hit a temporary glitch. Try sending that again.'
+      setMessages((current) => current.filter((item) => item.id !== assistantMessage.id))
+      setError(message)
+      setLastFailedMessage(trimmed)
+    } finally {
+      setIsSending(false)
+    }
   }
+
+  const startNewConversation = () => {
+    setConversationId(null)
+    setMessages([])
+    setInput('')
+    setError(null)
+    setLastFailedMessage(null)
+    setIsSending(false)
+  }
+
+  const healthLabel = health === 'online'
+    ? 'Online'
+    : health === 'checking'
+      ? 'Connecting'
+      : health === 'degraded'
+        ? 'Knowledge offline'
+        : 'Offline'
+  const canSend = health === 'online' && !isSending
 
   return (
     <motion.div
@@ -92,12 +258,17 @@ function AgentChatPreview() {
             animate={prefersReducedMotion ? {} : { scale: [1, 1.35, 1], opacity: [1, 0.65, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
           />
-          <div><strong>Shiva’s AI assistant</strong><span>Ask me anything about the work</span></div>
+          <div><strong>Sync</strong><span>Ask me anything about the my boss</span></div>
         </div>
-        <span className="agent-chat-status">Online</span>
+        <span className={`agent-chat-status agent-chat-status-${health}`}>{healthLabel}</span>
       </div>
 
-      <div className="agent-chat-messages" aria-live="polite">
+      <div
+        ref={messagesContainerRef}
+        className="agent-chat-messages"
+        aria-live="polite"
+        data-lenis-prevent
+      >
         <motion.div
           className="agent-chat-message agent agent-welcome"
           initial={prefersReducedMotion ? false : { opacity: 0, y: 18, clipPath: 'inset(0 100% 0 0 round 16px)' }}
@@ -105,25 +276,42 @@ function AgentChatPreview() {
           transition={{ delay: 1.05, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
           <span className="agent-message-label">ASSISTANT / 00</span>
-          <Typewriter
-            text="Hi — I’m Shiva’s AI assistant. Ask me about the work, the thinking, or what I’m building next."
-            reducedMotion={prefersReducedMotion}
-          />
+          <Typewriter text={WELCOME_MESSAGE} reducedMotion={prefersReducedMotion} />
         </motion.div>
         <AnimatePresence initial={false}>
           {messages.map((message, index) => (
             <motion.div
               key={message.id}
-              className={`agent-chat-message ${message.sender}`}
+              className={`agent-chat-message ${message.role === 'assistant' ? 'agent' : 'visitor'}`}
               initial={prefersReducedMotion ? false : { opacity: 0, y: 14, scale: 0.94 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 0.45, delay: message.sender === 'agent' ? 0.2 : 0 }}
+              transition={{ duration: 0.45, delay: message.role === 'assistant' ? 0.2 : 0 }}
             >
-              {message.sender === 'agent' && <span className="agent-message-label">ASSISTANT / {String(index + 1).padStart(2, '0')}</span>}
-              {message.sender === 'agent' ? <Typewriter text={message.text} reducedMotion={prefersReducedMotion} /> : message.text}
+              {message.role === 'assistant' && <span className="agent-message-label">ASSISTANT / {String(index + 1).padStart(2, '0')}</span>}
+              {message.role === 'assistant'
+                ? message.isStreaming && !message.content
+                  ? <span className="agent-chat-typing" aria-label="Assistant is typing"><i /><i /><i /></span>
+                  : <MarkdownMessage content={message.content} />
+                : message.content}
             </motion.div>
           ))}
         </AnimatePresence>
+        {health === 'offline' && (
+          <div className="agent-chat-connection-note" role="status">
+            Sync is offline right now. Start the backend and refresh to continue.
+          </div>
+        )}
+        {health === 'degraded' && (
+          <div className="agent-chat-connection-note" role="status">
+            Sync is connected, but its knowledge base is still warming up.
+          </div>
+        )}
+        {error && (
+          <div className="agent-chat-error" role="alert">
+            <span>{error}</span>
+            {lastFailedMessage && <button type="button" onClick={() => sendMessage(lastFailedMessage)} disabled={!canSend}>Retry</button>}
+          </div>
+        )}
       </div>
 
       <div className="agent-chat-suggestions">
@@ -132,6 +320,7 @@ function AgentChatPreview() {
             key={suggestion}
             type="button"
             onClick={() => sendMessage(suggestion)}
+            disabled={!canSend}
             data-cursor="hover"
             initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -142,12 +331,24 @@ function AgentChatPreview() {
         ))}
       </div>
 
-      <form className="agent-chat-form" onSubmit={(event) => { event.preventDefault(); sendMessage() }}>
+      <form className="agent-chat-form" onSubmit={(event) => { event.preventDefault(); void sendMessage() }}>
         <span className="agent-chat-prompt-mark">⌁</span>
-        <input value={input} onChange={(event) => setInput(event.target.value)} placeholder="Start a conversation..." aria-label="Ask Shiva’s AI assistant" />
-        <button type="submit" aria-label="Send message" disabled={!input.trim()} data-cursor="hover">↗</button>
+        <input
+          value={input}
+          onChange={(event) => setInput(event.target.value)}
+          placeholder={health === 'online' ? 'Start a conversation...' : 'Sync is not connected yet'}
+          aria-label="Ask Shiva’s AI assistant"
+          disabled={!canSend}
+        />
+        <button type="submit" aria-label="Send message" disabled={!input.trim() || !canSend} data-cursor="hover">↗</button>
       </form>
-      <div className="agent-chat-footer"><span>Local preview / live agent coming soon</span><span className="agent-chat-footer-line" /></div>
+      <div className="agent-chat-footer">
+        <span>{isSending ? 'Sync / thinking...' : conversationId ? 'Conversation saved for this session' : 'Powered by Sync'}</span>
+        <div className="agent-chat-footer-actions">
+          {messages.length > 0 && <button type="button" onClick={startNewConversation}>New conversation</button>}
+          <span className="agent-chat-footer-line" />
+        </div>
+      </div>
     </motion.div>
   )
 }
