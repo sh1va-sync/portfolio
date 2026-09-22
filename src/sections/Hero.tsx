@@ -18,13 +18,7 @@ type HealthState = 'checking' | 'online' | 'offline' | 'degraded'
 const API_URL = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000').replace(/\/$/, '')
 const SESSION_STORAGE_KEY = 'portfolio-agent-chat'
 
-const SUGGESTIONS = [
-  'What does Shiva build?',
-  'Tell me about his AI work',
-  'How does he think?',
-]
-
-const WELCOME_MESSAGE = 'Hi — I’m Shiva’s AI assistant. Ask me about the work, the thinking, or what I’m building next.'
+const WELCOME_MESSAGE = "Hey I'm Sync, my boss made me to be his personal assisstant. How can I help?"
 
 function Typewriter({ text, reducedMotion }: { text: string; reducedMotion: boolean }) {
   const [visibleText, setVisibleText] = useState(reducedMotion ? text : '')
@@ -46,7 +40,7 @@ function Typewriter({ text, reducedMotion }: { text: string; reducedMotion: bool
     return () => window.clearInterval(interval)
   }, [reducedMotion, text])
 
-  return <>{visibleText}<span className="agent-chat-caret" aria-hidden="true" /></>
+  return <>{visibleText}</>
 }
 
 function readStoredChat(): { conversationId: string | null; messages: ChatMessage[] } {
@@ -90,6 +84,42 @@ function MarkdownMessage({ content }: { content: string }) {
   )
 }
 
+function LetterByLetterMessage({
+  content,
+  reducedMotion,
+  onComplete,
+}: {
+  content: string
+  reducedMotion: boolean
+  onComplete: () => void
+}) {
+  const [visibleText, setVisibleText] = useState(reducedMotion ? content : '')
+
+  useEffect(() => {
+    if (reducedMotion) {
+      setVisibleText(content)
+      onComplete()
+      return
+    }
+
+    let index = 0
+    const interval = window.setInterval(() => {
+      index += 1
+      setVisibleText(content.slice(0, index))
+      if (index >= content.length) {
+        window.clearInterval(interval)
+        onComplete()
+      }
+    }, 14)
+
+    return () => window.clearInterval(interval)
+  }, [content, onComplete, reducedMotion])
+
+  return (
+    <MarkdownMessage content={visibleText} />
+  )
+}
+
 async function getErrorMessage(response: Response, fallback: string) {
   try {
     const data = await response.json() as { detail?: string; message?: string }
@@ -112,6 +142,7 @@ function AgentChatPreview() {
   const { prefersReducedMotion } = useMotionContext()
   const storedChat = useRef(readStoredChat()).current
   const messagesContainerRef = useRef<HTMLDivElement>(null)
+  const requestController = useRef<AbortController | null>(null)
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<ChatMessage[]>(storedChat.messages)
   const [conversationId, setConversationId] = useState<string | null>(storedChat.conversationId)
@@ -150,6 +181,8 @@ function AgentChatPreview() {
     return () => controller.abort()
   }, [])
 
+  useEffect(() => () => requestController.current?.abort(), [])
+
   const sendMessage = async (text = input) => {
     const trimmed = text.trim()
     if (!trimmed || isSending || health !== 'online') return
@@ -164,10 +197,14 @@ function AgentChatPreview() {
     setLastFailedMessage(null)
     setIsSending(true)
 
+    const controller = new AbortController()
+    requestController.current = controller
+
     try {
       const response = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           conversation_id: conversationId,
           message: trimmed,
@@ -196,20 +233,23 @@ function AgentChatPreview() {
       setConversationId(data.conversation_id ?? conversationId)
       setMessages((current) => current.map((message) =>
         message.id === assistantMessage.id
-          ? { ...message, content: reply, sources: data.sources ?? [], isStreaming: false }
+          ? { ...message, content: reply, sources: data.sources ?? [], isStreaming: true }
           : message
       ))
     } catch (requestError) {
+      if (controller.signal.aborted) return
       const message = requestError instanceof Error ? requestError.message : 'Sync hit a temporary glitch. Try sending that again.'
       setMessages((current) => current.filter((item) => item.id !== assistantMessage.id))
       setError(message)
       setLastFailedMessage(trimmed)
     } finally {
+      if (requestController.current === controller) requestController.current = null
       setIsSending(false)
     }
   }
 
   const startNewConversation = () => {
+    requestController.current?.abort()
     setConversationId(null)
     setMessages([])
     setInput('')
@@ -275,11 +315,10 @@ function AgentChatPreview() {
           animate={{ opacity: 1, y: 0, clipPath: 'inset(0 0% 0 0 round 16px)' }}
           transition={{ delay: 1.05, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
-          <span className="agent-message-label">ASSISTANT / 00</span>
           <Typewriter text={WELCOME_MESSAGE} reducedMotion={prefersReducedMotion} />
         </motion.div>
         <AnimatePresence initial={false}>
-          {messages.map((message, index) => (
+          {messages.map((message) => (
             <motion.div
               key={message.id}
               className={`agent-chat-message ${message.role === 'assistant' ? 'agent' : 'visitor'}`}
@@ -287,11 +326,22 @@ function AgentChatPreview() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ duration: 0.45, delay: message.role === 'assistant' ? 0.2 : 0 }}
             >
-              {message.role === 'assistant' && <span className="agent-message-label">ASSISTANT / {String(index + 1).padStart(2, '0')}</span>}
               {message.role === 'assistant'
                 ? message.isStreaming && !message.content
                   ? <span className="agent-chat-typing" aria-label="Assistant is typing"><i /><i /><i /></span>
-                  : <MarkdownMessage content={message.content} />
+                  : message.isStreaming
+                    ? (
+                      <LetterByLetterMessage
+                        content={message.content}
+                        reducedMotion={prefersReducedMotion}
+                        onComplete={() => {
+                          setMessages((current) => current.map((item) => (
+                            item.id === message.id ? { ...item, isStreaming: false } : item
+                          )))
+                        }}
+                      />
+                    )
+                    : <MarkdownMessage content={message.content} />
                 : message.content}
             </motion.div>
           ))}
@@ -312,23 +362,6 @@ function AgentChatPreview() {
             {lastFailedMessage && <button type="button" onClick={() => sendMessage(lastFailedMessage)} disabled={!canSend}>Retry</button>}
           </div>
         )}
-      </div>
-
-      <div className="agent-chat-suggestions">
-        {SUGGESTIONS.map((suggestion, index) => (
-          <motion.button
-            key={suggestion}
-            type="button"
-            onClick={() => sendMessage(suggestion)}
-            disabled={!canSend}
-            data-cursor="hover"
-            initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.3 + index * 0.08 }}
-          >
-            <span>0{index + 1}</span>{suggestion}
-          </motion.button>
-        ))}
       </div>
 
       <form className="agent-chat-form" onSubmit={(event) => { event.preventDefault(); void sendMessage() }}>
