@@ -15,7 +15,7 @@ type ChatMessage = {
 
 type HealthState = 'checking' | 'online' | 'offline' | 'degraded'
 
-const API_URL = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000').replace(/\/$/, '')
+const API_URL = (import.meta.env.VITE_API_URL || 'https://my-personal-assistant-v15p.onrender.com').replace(/\/$/, '')
 const SESSION_STORAGE_KEY = 'portfolio-agent-chat'
 
 const WELCOME_MESSAGE = "Hey I'm Sync, my boss made me to be his personal assisstant. How can I help?"
@@ -168,17 +168,35 @@ function AgentChatPreview() {
 
   useEffect(() => {
     const controller = new AbortController()
-    fetch(`${API_URL}/api/health`, { signal: controller.signal })
-      .then(async (response) => {
-        if (!response.ok) throw new Error('Health request failed')
-        const data = await response.json() as { status?: string; knowledge_ready?: boolean }
-        setHealth(data.status === 'ok' && data.knowledge_ready !== false ? 'online' : 'degraded')
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setHealth('offline')
-      })
+    let frameId: number | null = null
 
-    return () => controller.abort()
+    const checkHealth = () => {
+      fetch(`${API_URL}/api/health`, { signal: controller.signal })
+        .then(async (response) => {
+          if (!response.ok) throw new Error('Health request failed')
+          const data = await response.json() as { status?: string; knowledge_ready?: boolean }
+          setHealth(data.status === 'ok' && data.knowledge_ready !== false ? 'online' : 'degraded')
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) setHealth('offline')
+        })
+    }
+
+    const startHealthCheck = () => {
+      frameId = window.requestAnimationFrame(checkHealth)
+    }
+
+    if (document.readyState === 'complete') {
+      startHealthCheck()
+    } else {
+      window.addEventListener('load', startHealthCheck, { once: true })
+    }
+
+    return () => {
+      controller.abort()
+      window.removeEventListener('load', startHealthCheck)
+      if (frameId !== null) window.cancelAnimationFrame(frameId)
+    }
   }, [])
 
   useEffect(() => () => requestController.current?.abort(), [])
