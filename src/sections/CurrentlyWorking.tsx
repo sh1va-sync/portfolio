@@ -249,9 +249,9 @@ export function CurrentlyWorking() {
               viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 0.7 }}
             >
-              Skills I’m exploring
+              Focussing on
               <br />
-              <em>right now.</em>
+              <em>Gen/Agentic AI</em>
             </motion.h2>
             <p>A visual map of the technologies, tools, and concepts I’m diving into while learning to build useful AI products.</p>
           </div>
