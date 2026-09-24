@@ -394,7 +394,7 @@ function AgentChatPreview() {
         <button type="submit" aria-label="Send message" disabled={!input.trim() || !canSend} data-cursor="hover">↗</button>
       </form>
       <div className="agent-chat-footer">
-        <span>{isSending ? 'Sync / thinking...' : conversationId ? 'Conversation saved for this session' : 'Powered by Sync'}</span>
+        <span>{isSending ? 'Sync / thinking...' : conversationId ? 'Conversation saved for this session' : 'Powered by Gemini'}</span>
         <div className="agent-chat-footer-actions">
           {messages.length > 0 && <button type="button" onClick={startNewConversation}>New conversation</button>}
           <span className="agent-chat-footer-line" />

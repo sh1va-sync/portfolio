@@ -10,24 +10,28 @@ const EASE = [0.16, 1, 0.3, 1] as const
 
 export const PROJECTS = [
   {
-    id: 'lumina',
-    title: 'Lumina',
-    caption: 'Real-time data visualization platform built for engineering scale.',
-    year: '2025',
-    role: 'Lead engineer',
-    image: '/projects/lumina.png',
-    stack: 'React / TypeScript / Data systems',
-    story: 'A real-time operations dashboard that turns noisy infrastructure signals into a calm, legible picture of system health.',
+    id: 'smile-dental',
+    title: 'Smile Desk',
+    caption: 'Smile Desk is an AI powered Dental FrontDesk.',
+    year: '2026',
+    role: 'Built with claude',
+    image: '/projects/smileDesk.png',
+    stack: 'React / Python / RAG / Tool Calling',
+    story: 'AI Powered Dental Front Desk which assists users to deal with dental related problems, the AI agent talks to user to assess their problem, helps them solve it at home or if the user needs to get a consultation it provides info about local dental clinics and offers to book an appointment.',
+    liveUrl: 'https://www.google.com',
+    githubUrl: 'https://github.com/sh1va-sync/dental-ai-voice-agent',
   },
   {
-    id: 'prose',
-    title: 'Prose',
-    caption: 'Distraction-free writing tool with AI-assisted suggestion layer.',
+    id: 'metaconnect',
+    title: 'Meta-Connect',
+    caption: 'Realtime 2D Virtual Office space',
     year: '2024',
     role: 'Solo project',
-    image: '/projects/prose.png',
-    stack: 'React / AI writing tools / Product design',
+    image: '/projects/metaconnect.png',
+    stack: 'React / Node / ',
     story: 'A focused writing environment designed around the quiet space between a first thought and a finished sentence.',
+    liveUrl: '',
+    githubUrl: 'https://github.com/sh1va-sync/the_metaApp_project',
   },
   {
     id: 'orbit',
@@ -38,6 +42,8 @@ export const PROJECTS = [
     image: '/projects/orbit.png',
     stack: 'Next.js / Node.js / PostgreSQL',
     story: 'A collaborative planning system that makes team constraints visible and helps work move without constant coordination overhead.',
+    liveUrl: '',
+    githubUrl: '',
   },
 ] as const
 
@@ -138,11 +144,35 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
         <span aria-hidden="true">←</span> Back to work
       </button>
       <div className="project-detail-hero">
-        <p>Selected work / {project.year}</p>
+        <div className="project-detail-hero-meta">
+          <div className="project-detail-live-action" aria-label={`${project.title} live site`}>
+            {project.liveUrl ? (
+              <a className="project-detail-live-button" href={project.liveUrl} target="_blank" rel="noreferrer" data-cursor="hover" aria-label="Visit live site">
+                <span>Live</span><span aria-hidden="true">↗</span>
+              </a>
+            ) : (
+              <span className="project-detail-live-button project-detail-action-disabled" aria-disabled="true">
+                <span>Live</span><span aria-hidden="true">↗</span>
+              </span>
+            )}
+          </div>
+          <p>Selected work / {project.year}</p>
+        </div>
         <h1>{project.title}</h1>
         <span>{project.role}</span>
       </div>
       <div className="project-detail-image"><img src={project.image} alt={`${project.title} project preview`} /></div>
+      <div className="project-detail-github-action" aria-label={`${project.title} GitHub repository`}>
+        {project.githubUrl ? (
+          <a className="project-detail-github-button" href={project.githubUrl} target="_blank" rel="noreferrer" data-cursor="hover">
+            View source on GitHub <span aria-hidden="true">↗</span>
+          </a>
+        ) : (
+          <span className="project-detail-github-button project-detail-action-disabled" aria-disabled="true">
+            GitHub repository unavailable <span aria-hidden="true">↗</span>
+          </span>
+        )}
+      </div>
       <div className="project-detail-copy">
         <div><span>About the project</span><h2>{project.caption}</h2></div>
         <div><p>{project.story}</p><p className="project-detail-stack">{project.stack}</p></div>
