@@ -11,6 +11,7 @@ type ChatMessage = {
   content: string
   sources?: string[]
   isStreaming?: boolean
+  failed?: boolean
 }
 
 type HealthState = 'checking' | 'online' | 'offline' | 'degraded'
@@ -149,7 +150,7 @@ function AgentChatPreview() {
   const [health, setHealth] = useState<HealthState>('checking')
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [lastFailedMessage, setLastFailedMessage] = useState<string | null>(null)
+  const [lastFailedMessage, setLastFailedMessage] = useState<{ id: string; content: string } | null>(null)
   const [pointer, setPointer] = useState({ x: 0, y: 0 })
 
   useEffect(() => {
@@ -201,15 +202,26 @@ function AgentChatPreview() {
 
   useEffect(() => () => requestController.current?.abort(), [])
 
-  const sendMessage = async (text = input) => {
+  const sendMessage = async (text = input, existingUserMessageId?: string) => {
     const trimmed = text.trim()
     if (!trimmed || isSending || health !== 'online') return
 
-    const history = messages.map(({ role, content }) => ({ role, content }))
-    const userMessage = createMessage('user', trimmed)
+    const history = messages
+      .filter((message) => !message.failed && message.id !== existingUserMessageId)
+      .map(({ role, content }) => ({ role, content }))
+    const userMessage = existingUserMessageId
+      ? null
+      : createMessage('user', trimmed)
     const assistantMessage = createMessage('assistant', '', true)
 
-    setMessages((current) => [...current, userMessage, assistantMessage])
+    setMessages((current) => {
+      const withoutFailedFlag = existingUserMessageId
+        ? current.map((message) => message.id === existingUserMessageId ? { ...message, failed: false } : message)
+        : current
+      return userMessage
+        ? [...withoutFailedFlag, userMessage, assistantMessage]
+        : [...withoutFailedFlag, assistantMessage]
+    })
     setInput('')
     setError(null)
     setLastFailedMessage(null)
@@ -252,14 +264,20 @@ function AgentChatPreview() {
       setMessages((current) => current.map((message) =>
         message.id === assistantMessage.id
           ? { ...message, content: reply, sources: data.sources ?? [], isStreaming: true }
-          : message
+          : message.id === existingUserMessageId ? { ...message, failed: false } : message
       ))
     } catch (requestError) {
       if (controller.signal.aborted) return
       const message = requestError instanceof Error ? requestError.message : 'Sync hit a temporary glitch. Try sending that again.'
       setMessages((current) => current.filter((item) => item.id !== assistantMessage.id))
       setError(message)
-      setLastFailedMessage(trimmed)
+      const failedMessageId = existingUserMessageId ?? userMessage?.id
+      if (failedMessageId) {
+        setMessages((current) => current.map((item) => (
+          item.id === failedMessageId ? { ...item, failed: true } : item
+        )))
+        setLastFailedMessage({ id: failedMessageId, content: trimmed })
+      }
     } finally {
       if (requestController.current === controller) requestController.current = null
       setIsSending(false)
@@ -377,7 +395,7 @@ function AgentChatPreview() {
         {error && (
           <div className="agent-chat-error" role="alert">
             <span>{error}</span>
-            {lastFailedMessage && <button type="button" onClick={() => sendMessage(lastFailedMessage)} disabled={!canSend}>Retry</button>}
+            {lastFailedMessage && <button type="button" onClick={() => sendMessage(lastFailedMessage.content, lastFailedMessage.id)} disabled={!canSend}>Retry</button>}
           </div>
         )}
       </div>
