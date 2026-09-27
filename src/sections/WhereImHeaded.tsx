@@ -3,7 +3,7 @@ import { useScrollReveal } from '../hooks/useScrollReveal'
 import { useMotionContext } from '../context/MotionContext'
 
 const STATEMENT =
-  'Toward interfaces that get out of the way — and the teams that care enough to build them right.'
+  'Building things that feel simple, work intelligently, and leave an impact.'
 
 export function WhereImHeaded() {
   const { ref }        = useScrollReveal()

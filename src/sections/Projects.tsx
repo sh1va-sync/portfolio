@@ -36,11 +36,11 @@ export const PROJECTS = [
   {
     id: 'pneumo-ai',
     title: 'Pneumo.ai',
-    caption: 'Pneumonia detection system using Deeplearning',
+    caption: 'Pneumonia detection system using DeepLearning',
     year: '2024',
     role: 'Full-stack engineer',
     image: '/projects/orbit.png',
-    stack: 'Next.js / Node.js / ',
+    stack: 'React.js / Node.js / Express.js / Classification / DeepLearning / CNN ',
     story: 'A web application that uses deep learning model to detect pneumonia from chest X-ray images. Users can upload their X-ray images and the system will analyze them and provide a diagnosis.',
     liveUrl: '',
     githubUrl: 'https://github.com/sh1va-sync/pneumo_ai',

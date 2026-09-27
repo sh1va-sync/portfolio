@@ -38,7 +38,7 @@ function WorkPage() {
 function AboutPage() {
   return (
     <>
-      <PageIntro eyebrow="02 / About" title="Thoughtful systems, carefully made." />
+      <PageIntro eyebrow="02 / About" title="Curious&nbsp; by &nbsp; nature, Builder&nbsp; by&nbsp; choice." />
       <WhatIKnow />
       <HowIWork />
       <WhereImHeaded />
