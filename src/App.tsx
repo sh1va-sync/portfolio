@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { MotionProvider }    from './context/MotionContext'
@@ -14,6 +15,8 @@ import { Marquee }           from './sections/Marquee'
 import { Contact }           from './sections/Contact'
 import { CurrentlyWorking }  from './sections/CurrentlyWorking'
 import { ContactCTA }        from './sections/ContactCTA'
+import { PersonalPage }      from './personal/PersonalPage'
+import ScrollToTop from './components/ScrollToTop'
 
 function HomePage() {
   return (
@@ -62,22 +65,32 @@ function PageIntro({ eyebrow, title }: { eyebrow: string, title: string }) {
 function AppContent() {
   useLenis()
   const location = useLocation()
+  const isPersonalPage = location.pathname === '/personal'
+
+  useEffect(() => {
+    document.documentElement.dataset.mode = isPersonalPage ? 'artistic' : 'technical'
+    document.title = isPersonalPage
+      ? 'Shiva Chary — Personal'
+      : 'Shiva Chary — Software Engineer'
+  }, [isPersonalPage])
 
   return (
     <>
-      <CustomCursor />
+      {!isPersonalPage && <CustomCursor />}
       
       {/* Global Aurora Background */}
-      <div className="aurora-bg">
-        <div className="aurora-orb aurora-orb-1" />
-        <div className="aurora-orb aurora-orb-2" />
-        <div className="aurora-orb aurora-orb-3" />
-        <div className="aurora-orb aurora-orb-4" />
-      </div>
+      {!isPersonalPage && (
+        <div className="aurora-bg">
+          <div className="aurora-orb aurora-orb-1" />
+          <div className="aurora-orb aurora-orb-2" />
+          <div className="aurora-orb aurora-orb-3" />
+          <div className="aurora-orb aurora-orb-4" />
+        </div>
+      )}
 
-      <Nav />
+      {!isPersonalPage && <Nav />}
       <main id="top" style={{ position: 'relative', zIndex: 1, minHeight: '100vh' }}>
-        <div className="app-glass">
+        <div className={isPersonalPage ? 'personal-app-shell' : 'app-glass'}>
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
@@ -92,13 +105,14 @@ function AppContent() {
                 <Route path="/work/:projectId" element={<ProjectRoute />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/contact" element={<ContactPage />} />
+                <Route path="/personal" element={<PersonalPage />} />
                 <Route path="*" element={<HomePage />} />
               </Routes>
             </motion.div>
           </AnimatePresence>
         </div>
       </main>
-      <SiteFooter />
+      {!isPersonalPage && <SiteFooter />}
     </>
   )
 }
@@ -113,6 +127,7 @@ export default function App() {
   return (
     <MotionProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <AppContent />
       </BrowserRouter>
     </MotionProvider>

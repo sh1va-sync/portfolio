@@ -17,8 +17,6 @@ export function Nav() {
   const [isOpen, setIsOpen] = useState(false)
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [isLogoExpanded, setIsLogoExpanded] = useState(false)
-  const [isArtistic, setIsArtistic] = useState(false)
-  const [isModeTransitioning, setIsModeTransitioning] = useState(false)
   const [isDark, setIsDark] = useState(() => {
     if (typeof window === 'undefined') return false
     const stored = window.localStorage.getItem('portfolio-theme')
@@ -34,14 +32,6 @@ export function Nav() {
   }, [isDark])
 
   useEffect(() => {
-    document.documentElement.dataset.mode = isArtistic ? 'artistic' : 'technical'
-    window.localStorage.setItem('portfolio-mode', isArtistic ? 'artistic' : 'technical')
-  }, [isArtistic])
-
-  useEffect(() => {
-    const storedMode = window.localStorage.getItem('portfolio-mode')
-    if (storedMode === 'artistic') setIsArtistic(true)
-
     // Briefly reveal the controls when the website loads
     // so users discover that the logo contains controls.
     setIsLogoExpanded(true)
@@ -84,16 +74,6 @@ export function Nav() {
       window.scrollTo(0, 0)
       window.setTimeout(() => setIsTransitioning(false), 450)
     }, 480)
-  }
-
-  const toggleArtisticMode = () => {
-    setIsModeTransitioning(true)
-    setIsArtistic((artistic) => !artistic)
-
-    window.setTimeout(
-      () => setIsModeTransitioning(false),
-      prefersReducedMotion ? 0 : 850
-    )
   }
 
   return (
@@ -183,55 +163,17 @@ export function Nav() {
 
                 <button
                   type="button"
-                  className={isArtistic ? 'is-active' : ''}
-                  onClick={toggleArtisticMode}
-                  title="Switch artistic mode"
+                  onClick={() => navigateTo('/personal')}
+                  title="Explore the personal side"
+                  aria-label="Explore the personal side"
                 >
                   <Palette size={15} />
-                  <span>{isArtistic ? 'Studio' : 'Art'}</span>
+                  <span>Art</span>
                 </button>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
-
-        <AnimatePresence>
-          {isModeTransitioning && !prefersReducedMotion && (
-            <div className="mode-transition" aria-hidden="true">
-              <motion.i
-                className="mode-ripple mode-ripple-white"
-                initial={{ scale: 0, opacity: 0.9 }}
-                animate={{ scale: 3.6, opacity: 0 }}
-                transition={{
-                  duration: 0.95,
-                  ease: EASE,
-                }}
-              />
-
-              <motion.i
-                className="mode-ripple mode-ripple-violet"
-                initial={{ scale: 0, opacity: 0.85 }}
-                animate={{ scale: 3.1, opacity: 0 }}
-                transition={{
-                  duration: 0.95,
-                  delay: 0.08,
-                  ease: EASE,
-                }}
-              />
-
-              <motion.i
-                className="mode-ripple mode-ripple-blue"
-                initial={{ scale: 0, opacity: 0.9 }}
-                animate={{ scale: 2.6, opacity: 0 }}
-                transition={{
-                  duration: 0.95,
-                  delay: 0.16,
-                  ease: EASE,
-                }}
-              />
-            </div>
-          )}
-        </AnimatePresence>
 
         <button
           type="button"
