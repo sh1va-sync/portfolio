@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { BrainCircuit, Bot, Code2, Database, Layers3, Sparkles, type LucideIcon } from 'lucide-react'
+import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
+import { BrainCircuit, Bot, Box, Code2, Database, FileText, Layers3, MessageCircle, Sparkles, type LucideIcon } from 'lucide-react'
 import { useMotionContext } from '../context/MotionContext'
 
 type LearningGroup = {
@@ -58,46 +58,57 @@ const GROUP_DETAILS = [
   'Following the emerging ideas shaping the next generation of interfaces.',
 ]
 
+const TOPIC_ICONS: LucideIcon[] = [MessageCircle, FileText, Box, Database, Sparkles, BrainCircuit]
+
 export function CurrentlyWorking() {
-  const { prefersReducedMotion } = useMotionContext()
+  const { prefersReducedMotion, isTouchDevice } = useMotionContext()
   const [activeIndex, setActiveIndex] = useState(0)
-  const [selectedTopic, setSelectedTopic] = useState<string | null>(null)
+  const [selectedTopic, setSelectedTopic] = useState(GROUPS[0].topics[0])
   const activeGroup = GROUPS[activeIndex]
   const ActiveIcon = activeGroup.Icon
+  const pointerX = useMotionValue(0)
+  const pointerY = useMotionValue(0)
+  const rotateX = useSpring(useTransform(pointerY, [-1, 1], [2, -2]), { stiffness: 180, damping: 24 })
+  const rotateY = useSpring(useTransform(pointerX, [-1, 1], [-2, 2]), { stiffness: 180, damping: 24 })
 
   const selectGroup = (index: number) => {
     setActiveIndex(index)
-    setSelectedTopic(null)
+    setSelectedTopic(GROUPS[index].topics[0])
+  }
+
+  const handlePanelPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (prefersReducedMotion || isTouchDevice || event.pointerType !== 'mouse') return
+    const bounds = event.currentTarget.getBoundingClientRect()
+    const x = (event.clientX - bounds.left) / bounds.width
+    const y = (event.clientY - bounds.top) / bounds.height
+    pointerX.set(x * 2 - 1)
+    pointerY.set(y * 2 - 1)
+    event.currentTarget.style.setProperty('--focus-pointer-x', `${x * 100}%`)
+    event.currentTarget.style.setProperty('--focus-pointer-y', `${y * 100}%`)
+  }
+
+  const resetPanelPointer = (event: React.PointerEvent<HTMLDivElement>) => {
+    pointerX.set(0)
+    pointerY.set(0)
+    event.currentTarget.style.setProperty('--focus-pointer-x', '50%')
+    event.currentTarget.style.setProperty('--focus-pointer-y', '35%')
   }
 
   return (
     <section className="currently-working section-padding" aria-labelledby="currently-working-title">
       <div className="currently-working-inner">
         <header className="currently-working-heading">
-          <div className="currently-working-label">
-            <span className="ai-live-dot" />
-            Currently working on
-          </div>
+          <div className="currently-working-label"><span className="ai-live-dot" /> Currently learning</div>
           <div className="currently-working-heading-copy">
-            <motion.h2
-              id="currently-working-title"
-              initial={prefersReducedMotion ? false : { opacity: 0, y: 18 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.5 }}
-              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-            >
-              Focussing on 
-              <br />
-              <em>Building with AI.</em>
-            </motion.h2>
-            <p>I’m exploring the ideas and tools behind AI products that are genuinely useful.</p>
+            <h2 id="currently-working-title">Exploring AI, one idea at a time.</h2>
+            <p>I’m learning the tools and techniques behind useful AI products.</p>
           </div>
         </header>
 
         <div className="learning-explorer">
-          <div className="learning-explorer-nav">
-            <span className="learning-explorer-eyebrow"></span>
-            <div className="learning-focus-list" role="group" aria-label="Areas I’m learning">
+          <nav className="learning-explorer-nav" aria-label="Learning areas">
+            <span className="learning-explorer-eyebrow">AREAS OF INTEREST</span>
+            <div className="learning-focus-list">
               {GROUPS.map(({ title, note, Icon }, index) => (
                 <button
                   key={title}
@@ -111,7 +122,7 @@ export function CurrentlyWorking() {
                     <motion.span
                       className="learning-focus-highlight"
                       layoutId="learning-focus-highlight"
-                      transition={{ type: 'spring', stiffness: 360, damping: 32 }}
+                      transition={prefersReducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 360, damping: 32 }}
                       aria-hidden="true"
                     />
                   )}
@@ -124,11 +135,10 @@ export function CurrentlyWorking() {
                 </button>
               ))}
             </div>
-          </div>
+          </nav>
 
           <motion.div
             key={activeIndex}
-            id="learning-focus-panel"
             className="learning-focus-panel"
             role="region"
             aria-live="polite"
@@ -136,6 +146,13 @@ export function CurrentlyWorking() {
             initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
+            onPointerMove={handlePanelPointerMove}
+            onPointerLeave={resetPanelPointer}
+            style={{
+              rotateX: prefersReducedMotion || isTouchDevice ? 0 : rotateX,
+              rotateY: prefersReducedMotion || isTouchDevice ? 0 : rotateY,
+              transformPerspective: 1100,
+            }}
           >
             <div className="learning-focus-panel-top">
               <span>EXPLORING {String(activeIndex + 1).padStart(2, '0')} / {String(GROUPS.length).padStart(2, '0')}</span>
@@ -148,49 +165,62 @@ export function CurrentlyWorking() {
                 Next focus <span aria-hidden="true">↗</span>
               </button>
             </div>
-            <div className={`learning-orbit learning-orbit-${activeIndex % 2 === 0 ? 'blue' : 'violet'}`} aria-hidden="true">
-              <span className="learning-orbit-ring learning-orbit-ring-one" />
-              <span className="learning-orbit-ring learning-orbit-ring-two" />
-              <span className="learning-orbit-node learning-orbit-node-one" />
-              <span className="learning-orbit-node learning-orbit-node-two" />
-              <span className="learning-orbit-node learning-orbit-node-three" />
+            <div className="learning-focus-summary">
               <motion.span
-                className="learning-orbit-core"
+                className={`learning-focus-panel-icon learning-focus-panel-icon-${activeIndex % 2 === 0 ? 'blue' : 'violet'}`}
                 key={activeIndex}
-                initial={prefersReducedMotion ? false : { scale: 0.78, rotate: -12 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: 'spring', stiffness: 220, damping: 18 }}
+                initial={prefersReducedMotion ? false : { scale: 0.85, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={prefersReducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 240, damping: 20 }}
+                aria-hidden="true"
               >
-                <ActiveIcon size={28} strokeWidth={1.5} />
+                <ActiveIcon size={21} strokeWidth={1.7} />
               </motion.span>
+              <div>
+                <h3>{activeGroup.title}</h3>
+                <p className="learning-focus-note">{activeGroup.note}</p>
+                <p className="learning-focus-description">{GROUP_DETAILS[activeIndex]}</p>
+              </div>
             </div>
-            <h3>{activeGroup.title}</h3>
-            <p className="learning-focus-note">{activeGroup.note}</p>
-            <p className="learning-focus-description">{GROUP_DETAILS[activeIndex]}</p>
             <div className="learning-focus-divider" />
-            <div className="learning-topic-heading">
-              <span className="learning-explorer-eyebrow">ON MY RADAR</span>
-              {selectedTopic && <span className="learning-topic-selection" role="status">Focus: {selectedTopic}</span>}
+            <div className="learning-tech-inset">
+              <div className="learning-topic-heading">
+                <span className="learning-explorer-eyebrow"><strong>TECH</strong> I’M LEARNING</span>
+                <span className="learning-topic-selection" role="status">{selectedTopic}</span>
+              </div>
+              <ul className="learning-topic-list">
+                {activeGroup.topics.map((topic, index) => {
+                  const TopicIcon = TOPIC_ICONS[index % TOPIC_ICONS.length]
+                  const isSelected = selectedTopic === topic
+                  return (
+                    <motion.li
+                      key={topic}
+                      initial={prefersReducedMotion ? false : { opacity: 0, y: 7 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.25, delay: prefersReducedMotion ? 0 : index * 0.045 }}
+                    >
+                      <button
+                        type="button"
+                        aria-pressed={isSelected}
+                        className={isSelected ? 'is-selected' : ''}
+                        onClick={() => setSelectedTopic(topic)}
+                      >
+                        {isSelected && (
+                          <motion.span
+                            className="learning-topic-highlight"
+                            layoutId="learning-topic-highlight"
+                            transition={prefersReducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 320, damping: 28 }}
+                            aria-hidden="true"
+                          />
+                        )}
+                        <TopicIcon size={18} strokeWidth={1.8} aria-hidden="true" />
+                        <span>{topic}</span>
+                      </button>
+                    </motion.li>
+                  )
+                })}
+              </ul>
             </div>
-            <ul className="learning-topic-list">
-              {activeGroup.topics.map((topic) => (
-                <motion.li
-                  key={topic}
-                  initial={prefersReducedMotion ? false : { opacity: 0, y: 7 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25, delay: prefersReducedMotion ? 0 : activeGroup.topics.indexOf(topic) * 0.045 }}
-                >
-                  <button
-                    type="button"
-                    aria-pressed={selectedTopic === topic}
-                    className={selectedTopic === topic ? 'is-selected' : ''}
-                    onClick={() => setSelectedTopic((current) => current === topic ? null : topic)}
-                  >
-                    {topic}
-                  </button>
-                </motion.li>
-              ))}
-            </ul>
           </motion.div>
         </div>
       </div>
